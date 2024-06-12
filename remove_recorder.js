@@ -6,6 +6,10 @@
 					const iframe = window.parent.document.querySelector(selector);
 					if (iframe) {
 						iframe.style.display = "none";
+						const reset = frame.contentDocument.querySelector("#reset");
+						if (reset) {
+							reset.click();
+						}
 					}
 				}
 			}

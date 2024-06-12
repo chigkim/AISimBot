@@ -11,6 +11,11 @@ function toggle() {
 			record.click();
 		} else {
 			stop.click();
+			const reset = frame.contentDocument.querySelector("#reset");
+			if (reset) {
+				reset.click();
+			}
+
 		}
 	}
 }

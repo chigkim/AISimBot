@@ -1,4 +1,4 @@
-﻿3import streamlit as st
+﻿import streamlit as st
 api_key=st.secrets["OPENAI_API_KEY"]
 #model = "gpt-3.5-turbo"
 model = "gpt-4o"
@@ -7,6 +7,11 @@ from io import BytesIO
 from st_audiorec import st_audiorec
 import streamlit.components.v1 as components
 import codecs
+
+@st.cache_resource
+def get_file(file):
+	print(f"Getting {file}")
+	return codecs.open(file, "r", "utf-8").read()
 
 @st.cache_resource
 def client():
@@ -18,7 +23,7 @@ def assistant():
 	for a in assistants:
 		if "Patient Sim" in a.name:
 			client().beta.assistants.delete(a.id)
-	instruction = codecs.open("instruction.txt", "r", "utf-8").read()
+	instruction = get_file("instruction.txt")
 	return client().beta.assistants.create(name="Patient Sim", instructions=instruction, model=model)
 
 def generate():
@@ -29,7 +34,9 @@ def generate():
 			yield text
 		except: pass
 
+@st.cache_resource
 def transcribe(wav):
+	print("Transcribing")
 	file = BytesIO(wav)
 	file.name="speech.wav"
 	try:
@@ -39,7 +46,9 @@ def transcribe(wav):
 
 @st.cache_resource
 def speak(text):
-	return client().audio.speech.create(model="tts-1", voice="alloy", input=text)
+	try:
+		return client().audio.speech.create(model="tts-1", voice="alloy", input=text)
+	except: pass
 
 def process(prompt):
 	print("Processing ", prompt)
@@ -55,23 +64,23 @@ def process(prompt):
 	st.audio(speech.read(), autoplay=True)
 
 def toggle_mic():
-	js = open("toggle_mic.js").read()
-	js = js.replace("{{state}}", st.session_state.mic_label)
+	js = get_file("toggle_mic.js").replace("{{state}}", st.session_state.mic_label)
 	components.html(js, height=0)
 
 def prepare_audio():
-	style = open("style.css").read()
-	st.write(style, unsafe_allow_html=True)
+	css = get_file("style.css")
+	st.write(css, unsafe_allow_html=True)
 
 	if wav:=st_audiorec():
 		if len(wav)>1000:
 			transcribe(wav)
 		else:
 			st.write("Please try again, no sound was recorded.")
+			st.session_state.mic_label = "Send"
 			toggle_mic()
-			st.session_state.mic_label = "Record" if st.session_state.mic_label == "Send" else "Send"
+			st.session_state.mic_label = "Record"
 
-	js = open("remove_recorder.js").read()
+	js = get_file("remove_recorder.js")
 	components.html(js, height=0)
 
 @st.cache_resource
