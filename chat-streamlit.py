@@ -1,4 +1,4 @@
-﻿import streamlit as st
+﻿3import streamlit as st
 api_key=st.secrets["OPENAI_API_KEY"]
 #model = "gpt-3.5-turbo"
 model = "gpt-4o"
@@ -32,13 +32,10 @@ def generate():
 def transcribe(wav):
 	file = BytesIO(wav)
 	file.name="speech.wav"
-	response = client().audio.transcriptions.create(
-		file=file,
-		model="whisper-1",
-		language="en",
-		response_format="text"
-	)
-	st.session_state.prompt = response
+	try:
+		response = client().audio.transcriptions.create(file=file, model="whisper-1", language="en", response_format="text")
+		st.session_state.prompt = response
+	except Exception as e: st.write(e)
 
 @st.cache_resource
 def speak(text):
@@ -67,9 +64,13 @@ def prepare_audio():
 	st.write(style, unsafe_allow_html=True)
 
 	if wav:=st_audiorec():
-		st.write(f"Recorded: {len(wav)}")
-		if len(wav)>4000:
+		if len(wav)>1000:
 			transcribe(wav)
+		else:
+			st.write("Please try again, no sound was recorded.")
+			toggle_mic()
+			st.session_state.mic_label = "Record" if st.session_state.mic_label == "Send" else "Send"
+
 	js = open("remove_recorder.js").read()
 	components.html(js, height=0)
 
