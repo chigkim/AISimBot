@@ -1,5 +1,5 @@
 ﻿import streamlit as st
-#api_key=st.secrets["OPENAI_API_KEY"]
+api_key=st.secrets["OPENAI_API_KEY"]
 #model = "gpt-3.5-turbo"
 model = "gpt-4o"
 from openai import OpenAI
@@ -67,7 +67,9 @@ def prepare_audio():
 	st.write(style, unsafe_allow_html=True)
 
 	if wav:=st_audiorec():
-		transcribe(wav)
+		st.write(f"Recorded: {len(wav)}")
+		if len(wav)>4000:
+			transcribe(wav)
 	js = open("remove_recorder.js").read()
 	components.html(js, height=0)
 
